@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"log"
+	"message-relayer/service/config"
 	model2 "message-relayer/service/model"
 	messagetype2 "message-relayer/service/model/messagetype"
 	"message-relayer/service/relayer"
@@ -22,14 +23,14 @@ func New() {
 	r.Start()
 }
 
-func getRelayerConfig() *model2.Config {
+func getRelayerConfig() *config.Config {
 	importanceOrder := []messagetype2.MessageType{messagetype2.StartNewRound, messagetype2.ReceivedAnswer}
 
 	msgTypeToQueueSize := make(map[messagetype2.MessageType]int)
 	msgTypeToQueueSize[messagetype2.StartNewRound] = 2
 	msgTypeToQueueSize[messagetype2.StartNewRound] = 1
 
-	return  &model2.Config{
+	return  &config.Config{
 		MessageTypeToQueueSize: msgTypeToQueueSize,
 		MessageTypeImportanceOrderDesc: importanceOrder,
 	}

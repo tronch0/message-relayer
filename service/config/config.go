@@ -1,4 +1,4 @@
-package model
+package config
 
 import (
 	messagetype2 "message-relayer/service/model/messagetype"

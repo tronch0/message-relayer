@@ -2,6 +2,7 @@ package relayer
 
 import (
 	"log"
+	"message-relayer/service/config"
 	model2 "message-relayer/service/model"
 	messagetype2 "message-relayer/service/model/messagetype"
 	"message-relayer/service/utils"
@@ -16,7 +17,7 @@ import (
 //	messageImportanceOrderDESC  = []messagetype.MessageType{messagetype.StartNewRound,messagetype.ReceivedAnswer}
 //)
 
-func NewRelayer(socket model2.NetworkSocket, logger *log.Logger, config *model2.Config) *Relayer {
+func NewRelayer(socket model2.NetworkSocket, logger *log.Logger, config *config.Config) *Relayer {
 	res := &Relayer{
 		logger: logger,
 		socket: socket,
