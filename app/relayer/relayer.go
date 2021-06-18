@@ -2,29 +2,48 @@ package relayer
 
 import (
 	"log"
+	"message-relayer/app/utils"
 	"message-relayer/model"
+	"message-relayer/model/messagetype"
 )
 
-func NewRelayer(socket model.NetworkSocket, logger log.Logger) *Relayer {
+//const (
+//	queueSizeMessageType1 = 2
+//	queueSizeMessageType2 = 1
+//)
+//
+//var (
+//	messageImportanceOrderDESC  = []messagetype.MessageType{messagetype.StartNewRound,messagetype.ReceivedAnswer}
+//)
+
+func NewRelayer(socket model.NetworkSocket, logger *log.Logger, config *model.Config) *Relayer {
 	res := &Relayer{
 		logger: logger,
 		socket: socket,
-		subscriberMap: make(map[model.MessageType][]chan<-model.Message),
+		subscriberMap: make(map[messagetype.MessageType][]chan<-model.Message),
+		messagesQueues: make(map[messagetype.MessageType]*utils.Stack),
+		messageTypeImportanceDesc: config.MessageTypeImportanceOrderDesc,
 	}
 
-	go res.listen()
-	logger.Println("instantiate relayer")
+	for msgType, queueSize := range config.MessageTypeToQueueSize {
+		res.messagesQueues[msgType] = utils.NewStack(queueSize)
+	}
+
+	logger.Println("instantiated relayer")
 
 	return res
 }
 
 type Relayer struct {
-	socket model.NetworkSocket
-	logger log.Logger
-	subscriberMap map[model.MessageType][]chan<-model.Message
+	socket  model.NetworkSocket
+	logger *log.Logger
+
+	subscriberMap map[messagetype.MessageType][]chan<-model.Message
+	messagesQueues map[messagetype.MessageType]*utils.Stack
+	messageTypeImportanceDesc []messagetype.MessageType
 }
 
-func (r *Relayer) SubscribeToMessages(msgType model.MessageType, messages chan<- model.Message) {
+func (r *Relayer) SubscribeToMessages(msgType messagetype.MessageType, messages chan<- model.Message) {
 
 	if subscribers, isFound := r.subscriberMap[msgType]; isFound {
 		r.subscriberMap[msgType] = append(subscribers, messages)
@@ -35,22 +54,50 @@ func (r *Relayer) SubscribeToMessages(msgType model.MessageType, messages chan<-
 	r.logger.Printf("relayer - new subscriber for message-type %d", msgType)
 }
 
-func (r *Relayer) listen() {
-	maxErrCounter := 5 // we should setup a termination policy, specific error type or max error count
+func (r *Relayer) Start() {
+	maxErrCounter := 3 // we should setup a termination policy, specific error type or max error count
 	r.logger.Println("relayer - start listening")
 	for msg, err := r.socket.Read(); maxErrCounter > 0 ; {
 		if err != nil {
 			r.logger.Printf("error reading a message, err: %v", err)
 			maxErrCounter--
 		}
-		r.processMessage(msg)
+		r.queueMessage(msg)
 	}
+
+
+	r.processQueuedMessages()
 }
 
-func (r *Relayer) processMessage(msg model.Message) {
-	r.logger.Printf("relayer - broadcast message (type: %d) to %d subscribers", msg.Type, len(r.subscriberMap[msg.Type]))
-
-	for _, subscriber := range r.subscriberMap[msg.Type] {
-		subscriber <- msg
-	}
+func (r *Relayer) queueMessage(msg model.Message) {
+	r.logger.Printf("relayer - queue message (type: %d)", msg.Type)
+	r.messagesQueues[msg.Type].Push(msg)
 }
+
+func (r *Relayer) processQueuedMessages() {
+
+	// iterate over messages by type (from the most important to the lest important)
+	for _, msgType := range r.messageTypeImportanceDesc {
+
+		// iterate over all messages from the same type
+		for {
+			msg := r.messagesQueues[msgType].Pop()
+			if msg == nil {
+				break
+			}
+
+			r.logger.Printf("relayer - broadcast message (type: %d) to %d subscribers", msg.Type, len(r.subscriberMap[msg.Type]))
+
+			// iterate over all subscribers and broadcast
+			for _, subscriber := range r.subscriberMap[msg.Type] {
+				subscriber <- *msg
+			}
+		}
+	}
+
+}
+
+
+
+//r.logger.Printf("CRITICAL ERROR reached maximum errors count")
+//r.logger.Printf("service shutting down...")
