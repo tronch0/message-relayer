@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"message-relayer/model"
-	"message-relayer/model/messagetype"
+	model2 "message-relayer/service/model"
+	messagetype2 "message-relayer/service/model/messagetype"
 	"testing"
 )
 
@@ -19,21 +19,21 @@ func TestEmptyStack(t *testing.T) {
 
 func TestHappyFlow(t *testing.T) {
 	s := NewStack(3)
-	s.Push(model.Message{Type: messagetype.StartNewRound, Data: []byte("1")})
-	s.Push(model.Message{Type: messagetype.ReceivedAnswer, Data: []byte("2")})
-	s.Push(model.Message{Type: messagetype.Undefined, Data: []byte("3")})
+	s.Push(model2.Message{Type: messagetype2.StartNewRound, Data: []byte("1")})
+	s.Push(model2.Message{Type: messagetype2.ReceivedAnswer, Data: []byte("2")})
+	s.Push(model2.Message{Type: messagetype2.Undefined, Data: []byte("3")})
 
 	res := s.Pop()
-	if res.Type != messagetype.Undefined {
+	if res.Type != messagetype2.Undefined {
 		t.Fatalf("res value failed, expected val: %d, actual val: %d", 3,res.Type)
 	}
 	res = s.Pop()
-	if res.Type != messagetype.ReceivedAnswer {
+	if res.Type != messagetype2.ReceivedAnswer {
 		t.Fatalf("res value failed, expected val: %d, actual val: %d", 2,res.Type)
 	}
 
 	res = s.Pop()
-	if res.Type != messagetype.StartNewRound {
+	if res.Type != messagetype2.StartNewRound {
 		t.Fatalf("res value failed, expected val: %d, actual val: %d", 1,res.Type)
 	}
 
@@ -45,17 +45,17 @@ func TestHappyFlow(t *testing.T) {
 
 func TestOverwriteValues(t *testing.T) {
 	s := NewStack(2)
-	s.Push(model.Message{Type: messagetype.StartNewRound, Data: []byte("1")})
-	s.Push(model.Message{Type: messagetype.ReceivedAnswer, Data: []byte("2")})
-	s.Push(model.Message{Type: messagetype.Undefined, Data: []byte("3")})
+	s.Push(model2.Message{Type: messagetype2.StartNewRound, Data: []byte("1")})
+	s.Push(model2.Message{Type: messagetype2.ReceivedAnswer, Data: []byte("2")})
+	s.Push(model2.Message{Type: messagetype2.Undefined, Data: []byte("3")})
 
 	res := s.Pop()
-	if res.Type != messagetype.Undefined {
+	if res.Type != messagetype2.Undefined {
 		t.Fatalf("res value failed, expected val: %d, actual val: %d", 3,*res)
 	}
 
 	res = s.Pop()
-	if res.Type != messagetype.ReceivedAnswer {
+	if res.Type != messagetype2.ReceivedAnswer {
 		t.Fatalf("res value failed, expected val: %d, actual val: %d", 2,*res)
 	}
 

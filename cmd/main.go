@@ -2,12 +2,12 @@ package main
 
 import (
 	"log"
-	"message-relayer/app"
+	"message-relayer/service"
 )
 
 func main() {
 	log.Printf("** MessageRelayer service starting... **")
-	app.New()
+	service.New()
 	//if err := run(); err != nil {
 	//	fmt.Fprintf(os.Stdout, "%s\n", err)
 	//	os.Exit(1)
@@ -15,5 +15,5 @@ func main() {
 }
 
 //func run() error {
-//	return app.New()
+//	return service.New()
 //}

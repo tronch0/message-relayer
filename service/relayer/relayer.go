@@ -2,9 +2,9 @@ package relayer
 
 import (
 	"log"
-	"message-relayer/app/utils"
-	"message-relayer/model"
-	"message-relayer/model/messagetype"
+	model2 "message-relayer/service/model"
+	messagetype2 "message-relayer/service/model/messagetype"
+	"message-relayer/service/utils"
 )
 
 //const (
@@ -16,12 +16,12 @@ import (
 //	messageImportanceOrderDESC  = []messagetype.MessageType{messagetype.StartNewRound,messagetype.ReceivedAnswer}
 //)
 
-func NewRelayer(socket model.NetworkSocket, logger *log.Logger, config *model.Config) *Relayer {
+func NewRelayer(socket model2.NetworkSocket, logger *log.Logger, config *model2.Config) *Relayer {
 	res := &Relayer{
 		logger: logger,
 		socket: socket,
-		subscriberMap: make(map[messagetype.MessageType][]chan<-model.Message),
-		messagesQueues: make(map[messagetype.MessageType]*utils.Stack),
+		subscriberMap: make(map[messagetype2.MessageType][]chan<- model2.Message),
+		messagesQueues: make(map[messagetype2.MessageType]*utils.Stack),
 		messageTypeImportanceDesc: config.MessageTypeImportanceOrderDesc,
 	}
 
@@ -35,20 +35,20 @@ func NewRelayer(socket model.NetworkSocket, logger *log.Logger, config *model.Co
 }
 
 type Relayer struct {
-	socket  model.NetworkSocket
+	socket model2.NetworkSocket
 	logger *log.Logger
 
-	subscriberMap map[messagetype.MessageType][]chan<-model.Message
-	messagesQueues map[messagetype.MessageType]*utils.Stack
-	messageTypeImportanceDesc []messagetype.MessageType
+	subscriberMap map[messagetype2.MessageType][]chan<- model2.Message
+	messagesQueues map[messagetype2.MessageType]*utils.Stack
+	messageTypeImportanceDesc []messagetype2.MessageType
 }
 
-func (r *Relayer) SubscribeToMessages(msgType messagetype.MessageType, messages chan<- model.Message) {
+func (r *Relayer) SubscribeToMessages(msgType messagetype2.MessageType, messages chan<- model2.Message) {
 
 	if subscribers, isFound := r.subscriberMap[msgType]; isFound {
 		r.subscriberMap[msgType] = append(subscribers, messages)
 	} else {
-		r.subscriberMap[msgType] = []chan<-model.Message{messages}
+		r.subscriberMap[msgType] = []chan<- model2.Message{messages}
 	}
 
 	r.logger.Printf("relayer - new subscriber for message-type %d", msgType)
@@ -69,7 +69,7 @@ func (r *Relayer) Start() {
 	r.processQueuedMessages()
 }
 
-func (r *Relayer) queueMessage(msg model.Message) {
+func (r *Relayer) queueMessage(msg model2.Message) {
 	r.logger.Printf("relayer - queue message (type: %d)", msg.Type)
 	r.messagesQueues[msg.Type].Push(msg)
 }
