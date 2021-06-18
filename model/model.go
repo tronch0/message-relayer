@@ -1,16 +1,18 @@
 package model
 
+import "message-relayer/model/messagetype"
+
 type NetworkSocket interface {
 	Read() (Message, error)
 }
 
 type Message struct {
-	Type MessageType
+	Type messagetype.MessageType
 	Data []byte
 }
 
 type MessageRelayer interface {
-	SubscribeToMessages(msgType MessageType, messages chan<- Message)
+	SubscribeToMessages(msgType messagetype.MessageType, messages chan<- Message)
 }
 
 
