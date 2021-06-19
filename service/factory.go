@@ -3,28 +3,28 @@ package service
 import (
 	"fmt"
 	"log"
-	"os"
-	"strconv"
-	"time"
-
 	"message-relayer/service/config"
 	"message-relayer/service/model"
 	"message-relayer/service/model/messagetype"
 	"message-relayer/service/relayer"
-	"message-relayer/service/utils/sub"
+	"message-relayer/service/test/networksocket"
+	sub2 "message-relayer/service/test/subscriber"
+	"os"
 )
 
 func New() {
 
-	socket := getNetworkSocket()
+	socket := networksocket.New()
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
 	config := getRelayerConfig()
 
 	r := relayer.NewRelayer(socket, logger, config)
-	setupSubscribers(r,logger)
+	doneChan := setupSubscribers(r,logger)
 	r.Start()
 
-	time.Sleep(10 * time.Second)
+	if <-doneChan != true {
+		fmt.Println("assert error")
+	}
 }
 
 func getRelayerConfig() *config.Config {
@@ -40,34 +40,11 @@ func getRelayerConfig() *config.Config {
 	}
 }
 
-func getNetworkSocket() model.NetworkSocket {
-	return &NS{
-		c: 5,
-	}
-}
-
-type NS struct {
-	c int
-}
-
-func (n *NS) Read() (model.Message, error){
-	res := model.Message{Type: messagetype.Undefined, Data: nil}
-
-	if n.c < 0 {
-		return res, fmt.Errorf("no more messages")
-	}
-
-	n.c = n.c - 1
-	res.Type = messagetype.StartNewRound
-	res.Data = []byte(strconv.Itoa(time.Now().Second()))
-
-	return res, nil
-}
-
-
-func setupSubscribers(r model.MessageRelayer, logger *log.Logger) {
-	s := sub.New(logger, r)
+func setupSubscribers(r model.MessageRelayer, logger *log.Logger) chan bool {
+	s, doneChan := sub2.New(logger, r)
 	go s.Listen()
+
+	return doneChan
 }
 
 

@@ -51,6 +51,7 @@ func (r *Relayer) Start() { // we should setup a termination policy, specific er
 
 	r.consumeAndStoreMessages()
 	r.processQueuedMessages()
+	r.closedAllBroadcastChannels()
 }
 
 func (r *Relayer) consumeAndStoreMessages() {
@@ -70,9 +71,7 @@ func (r *Relayer) consumeAndStoreMessages() {
 
 func (r *Relayer) processQueuedMessages() {
 
-
 	for _, msgType := range r.messageTypeImportanceDesc { // iterate over messages by type in importance order (DESC)
-
 
 		messagesStack, isExist := r.messagesQueues[msgType]
 		if isExist == false {
@@ -88,8 +87,13 @@ func (r *Relayer) processQueuedMessages() {
 			}
 		}
 
-		r.logger.Printf("adsahuifehufhnesuihvsiuhkjbckjashciohsaiobjkfabkjasbdas")
-
 	}
-	r.logger.Printf("adsahuifehufhnesuihvsiuhkjbckjashciohsaiobjkfabkjasbdas")
+}
+
+func (r *Relayer) closedAllBroadcastChannels() {
+	for _, subscribersChannels := range r.subscriberMap {
+		for _, subscriberChan := range subscribersChannels {
+			close(subscriberChan)
+		}
+	}
 }
