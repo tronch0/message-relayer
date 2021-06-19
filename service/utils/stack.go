@@ -1,19 +1,19 @@
 package utils
 
 import (
-	model2 "message-relayer/service/model"
+	"message-relayer/service/model"
 )
 
 // Stack implementation with circular array under the hood
 type Stack struct {
-	arr []*model2.Message
+	arr []*model.Message
 	currPtr int
 	size int
 }
 
 
 func NewStack(size int) *Stack {
-	a := make([]*model2.Message, size)
+	a := make([]*model.Message, size)
 
 	return &Stack{
 		arr: a,
@@ -22,7 +22,7 @@ func NewStack(size int) *Stack {
 	}
 }
 
-func (s *Stack) Pop() *model2.Message {
+func (s *Stack) Pop() *model.Message {
 	if s.currPtr < 0 {
 		return nil
 	}
@@ -34,7 +34,7 @@ func (s *Stack) Pop() *model2.Message {
 	return res
 }
 
-func (s *Stack) Push(msg model2.Message) {
+func (s *Stack) Push(msg model.Message) {
 	s.currPtr = (s.currPtr + 1) % s.size
 	s.arr[s.currPtr] = &msg
 }

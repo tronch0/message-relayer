@@ -3,14 +3,15 @@ package service
 import (
 	"fmt"
 	"log"
+	"os"
+	"strconv"
+	"time"
+
 	"message-relayer/service/config"
 	"message-relayer/service/model"
 	"message-relayer/service/model/messagetype"
 	"message-relayer/service/relayer"
 	"message-relayer/service/utils/sub"
-	"os"
-	"strconv"
-	"time"
 )
 
 func New() {
@@ -22,6 +23,8 @@ func New() {
 	r := relayer.NewRelayer(socket, logger, config)
 	setupSubscribers(r,logger)
 	r.Start()
+
+	time.Sleep(10 * time.Second)
 }
 
 func getRelayerConfig() *config.Config {
