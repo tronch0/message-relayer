@@ -24,7 +24,6 @@ func New(logger *log.Logger, r model.MessageRelayer) (*Subscriber,chan bool) {
 
 	r.SubscribeToMessages(messagetype.StartNewRound,res.incomingChan)
 
-
 	return res, doneChan
 }
 
