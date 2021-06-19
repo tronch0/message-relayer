@@ -58,10 +58,12 @@ func (r *Relayer) SubscribeToMessages(msgType messagetype2.MessageType, messages
 func (r *Relayer) Start() {
 	maxErrCounter := 3 // we should setup a termination policy, specific error type or max error count
 	r.logger.Println("relayer - start listening")
-	for msg, err := r.socket.Read(); maxErrCounter > 0 ; {
+	for maxErrCounter > 0{
+		msg, err := r.socket.Read()
 		if err != nil {
 			r.logger.Printf("error reading a message, err: %v", err)
 			maxErrCounter--
+			continue
 		}
 		r.queueMessage(msg)
 	}
@@ -81,21 +83,26 @@ func (r *Relayer) processQueuedMessages() {
 	for _, msgType := range r.messageTypeImportanceDesc {
 
 		// iterate over all messages from the same type
-		for {
-			msg := r.messagesQueues[msgType].Pop()
-			if msg == nil {
-				break
+		isExist := true
+		for isExist {
+			if messagesStack, isExist := r.messagesQueues[msgType]; isExist {
+				msg := messagesStack.Pop()
+				if msg == nil {
+					break
+				}
+				r.logger.Printf("relayer - broadcast message (type: %d) to %d subscribers", msg.Type, len(r.subscriberMap[msg.Type]))
+
+				// iterate over all subscribers and broadcast
+				for _, subscriber := range r.subscriberMap[msg.Type] {
+					subscriber <- *msg
+				}
 			}
 
-			r.logger.Printf("relayer - broadcast message (type: %d) to %d subscribers", msg.Type, len(r.subscriberMap[msg.Type]))
-
-			// iterate over all subscribers and broadcast
-			for _, subscriber := range r.subscriberMap[msg.Type] {
-				subscriber <- *msg
-			}
 		}
-	}
+		r.logger.Printf("adsahuifehufhnesuihvsiuhkjbckjashciohsaiobjkfabkjasbdas")
 
+	}
+	r.logger.Printf("adsahuifehufhnesuihvsiuhkjbckjashciohsaiobjkfabkjasbdas")
 }
 
 

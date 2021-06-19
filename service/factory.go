@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"log"
 	"message-relayer/service/config"
-	model2 "message-relayer/service/model"
-	messagetype2 "message-relayer/service/model/messagetype"
+	"message-relayer/service/model"
+	"message-relayer/service/model/messagetype"
 	"message-relayer/service/relayer"
+	"message-relayer/service/utils/sub"
 	"os"
 	"strconv"
 	"time"
@@ -19,16 +20,16 @@ func New() {
 	config := getRelayerConfig()
 
 	r := relayer.NewRelayer(socket, logger, config)
-	setupSubscribers(r)
+	setupSubscribers(r,logger)
 	r.Start()
 }
 
 func getRelayerConfig() *config.Config {
-	importanceOrder := []messagetype2.MessageType{messagetype2.StartNewRound, messagetype2.ReceivedAnswer}
+	importanceOrder := []messagetype.MessageType{messagetype.StartNewRound, messagetype.ReceivedAnswer}
 
-	msgTypeToQueueSize := make(map[messagetype2.MessageType]int)
-	msgTypeToQueueSize[messagetype2.StartNewRound] = 2
-	msgTypeToQueueSize[messagetype2.StartNewRound] = 1
+	msgTypeToQueueSize := make(map[messagetype.MessageType]int)
+	msgTypeToQueueSize[messagetype.StartNewRound] = 2
+	msgTypeToQueueSize[messagetype.StartNewRound] = 1
 
 	return  &config.Config{
 		MessageTypeToQueueSize: msgTypeToQueueSize,
@@ -36,9 +37,9 @@ func getRelayerConfig() *config.Config {
 	}
 }
 
-func getNetworkSocket() model2.NetworkSocket {
+func getNetworkSocket() model.NetworkSocket {
 	return &NS{
-		c: 1,
+		c: 5,
 	}
 }
 
@@ -46,25 +47,25 @@ type NS struct {
 	c int
 }
 
-func (n *NS) Read() (model2.Message, error){
-	currSec := time.Now().Second()
+func (n *NS) Read() (model.Message, error){
+	res := model.Message{Type: messagetype.Undefined, Data: nil}
 
-	res := model2.Message{Type: messagetype2.Undefined, Data: nil}
-
-	if currSec == 35 {
-		return res, fmt.Errorf("couldn't retrive message")
-	}
-	if n.c != currSec {
-		res.Type = messagetype2.StartNewRound
-		res.Data = []byte(strconv.Itoa(time.Now().Second()))
+	if n.c < 0 {
+		return res, fmt.Errorf("no more messages")
 	}
 
-	n.c = currSec
+	n.c = n.c - 1
+	res.Type = messagetype.StartNewRound
+	res.Data = []byte(strconv.Itoa(time.Now().Second()))
 
 	return res, nil
 }
 
 
-func setupSubscribers(r model2.MessageRelayer) {
-
+func setupSubscribers(r model.MessageRelayer, logger *log.Logger) {
+	s := sub.New(logger, r)
+	go s.Listen()
 }
+
+
+
