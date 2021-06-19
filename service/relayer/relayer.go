@@ -2,8 +2,8 @@ package relayer
 
 import (
 	"log"
-	"message-relayer/service/config"
 	"message-relayer/service/model"
+	config2 "message-relayer/service/model/config"
 	"message-relayer/service/model/messagetype"
 	"message-relayer/service/utils"
 )
@@ -17,7 +17,7 @@ type Relayer struct {
 	messageTypeImportanceDesc []messagetype.MessageType
 }
 
-func NewRelayer(socket model.NetworkSocket, logger *log.Logger, config *config.Config) *Relayer {
+func NewRelayer(socket model.NetworkSocket, logger *log.Logger, config *config2.Config) *Relayer {
 	res := &Relayer{
 		logger: logger,
 		socket: socket,
@@ -30,7 +30,7 @@ func NewRelayer(socket model.NetworkSocket, logger *log.Logger, config *config.C
 		res.messagesQueues[msgType] = utils.NewStack(queueSize)
 	}
 
-	logger.Println("instantiated relayer")
+	res.logger.Println("instantiated relayer")
 
 	return res
 }
@@ -46,7 +46,7 @@ func (r *Relayer) SubscribeToMessages(msgType messagetype.MessageType, messages 
 	r.logger.Printf("relayer - added new subscriber for message-type %d", msgType)
 }
 
-func (r *Relayer) Start() { // we should setup a termination policy, specific error type or max error count
+func (r *Relayer) Listen() { // we should setup a termination policy, specific error type or max error count
 	r.logger.Println("relayer - start listening")
 
 	r.consumeAndStoreMessages()
@@ -72,7 +72,6 @@ func (r *Relayer) consumeAndStoreMessages() {
 func (r *Relayer) processQueuedMessages() {
 
 	for _, msgType := range r.messageTypeImportanceDesc { // iterate over messages by type in importance order (DESC)
-
 		messagesStack, isExist := r.messagesQueues[msgType]
 		if isExist == false {
 			continue

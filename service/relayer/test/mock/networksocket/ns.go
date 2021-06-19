@@ -6,26 +6,24 @@ import (
 	"message-relayer/service/model/messagetype"
 )
 
-func New() model.NetworkSocket {
+func New(messagesToSend []model.Message) model.NetworkSocket {
 	return &NS{
-		c: 5,
+		messagesToSend: messagesToSend,
 	}
 }
 
 type NS struct {
-	c int
+	messagesToSend []model.Message
 }
 
 func (n *NS) Read() (model.Message, error){
-	res := model.Message{Type: messagetype.Undefined, Data: nil}
-
-	if n.c < 0 {
-		return res, fmt.Errorf("no more messages")
+	if len(n.messagesToSend) == 0 {
+		return model.Message{Type: messagetype.Undefined, Data: nil}, fmt.Errorf("no more messages")
 	}
+	res := n.messagesToSend[0]
 
-	n.c = n.c - 1
-	res.Type = messagetype.StartNewRound
-	res.Data = []byte("“An ounce of prevention is worth a pound of cure.” - B.F")
+	n.messagesToSend = n.messagesToSend[1:]
 
 	return res, nil
 }
+
