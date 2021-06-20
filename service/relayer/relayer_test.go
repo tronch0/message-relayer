@@ -1,7 +1,7 @@
 package relayer
 
 import (
-	"fmt"
+	"bytes"
 	"io"
 	"log"
 	"message-relayer/service/model"
@@ -23,31 +23,360 @@ import (
 // 7. Happy flow - 3 subs - 3 message type
 
 
-func TestRelayerHappyPath(t *testing.T) {
+func TestOneSubTwoMsgType(t *testing.T) {
 	logger := log.New(getLogOutput(true), "", log.Ldate|log.Ltime|log.Lshortfile)
 	config := getServiceConfig()
 
 	msgs := []model.Message{
-		model.Message{Type: messagetype.StartNewRound, Data: []byte("1")},
-		model.Message{Type: messagetype.StartNewRound, Data: []byte("2")},
-		model.Message{Type: messagetype.ReceivedAnswer, Data: []byte("3")},
-		model.Message{Type: messagetype.ReceivedAnswer, Data: []byte("4")},
+		{Type: messagetype.StartNewRound, Data: []byte("1")},
+		{Type: messagetype.StartNewRound, Data: []byte("2")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("3")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("4")},
+		{Type: messagetype.StartNewRound, Data: []byte("5")},
+		{Type: messagetype.StartNewRound, Data: []byte("6")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("7")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("8")},
 	}
+	expectedOutputIds := [][]byte{[]byte("6"),[]byte("5"),[]byte("8")}
+
 	socket := networksocket.New(msgs)
+	relayer := NewRelayer(socket, logger, config)
 
-	r := NewRelayer(socket, logger, config)
+	sub1, sub1MsgChan := subscriber.New(
+		logger,
+		relayer,
+		1,
+		[]messagetype.MessageType{messagetype.StartNewRound, messagetype.ReceivedAnswer},
+		true,
+		)
 
-	s1, s1Chan := subscriber.New(logger, r, 1, []model.Message{}, t)
-	go s1.Listen()
+	sub1.Listen()
+	relayer.Listen()
 
-	r.Listen()
 
-	if <-s1Chan != true {
-		t.Fatalf("expected to get finish ack")
-		fmt.Println("assert error")
+	// assert result messages
+	i := 0
+	for msg := range sub1MsgChan {
+		if i >= len(expectedOutputIds) || bytes.Equal(msg.Data, expectedOutputIds[i]) == false {
+			t.Fatalf("error on result assert, expected msg.data: %s, actual: %s", expectedOutputIds[i], msg.Data)
+		}
+		i++
 	}
+
+	// assert result length
+	if i != len(expectedOutputIds) {
+		t.Fatalf("error on result length assert, expected len: %d, actual: %d", len(expectedOutputIds), i)
+	}
+
 }
 
+func TestOneSubOneMsgTypeReceivedAnswer(t *testing.T) {
+	logger := log.New(getLogOutput(true), "", log.Ldate|log.Ltime|log.Lshortfile)
+	config := getServiceConfig()
+
+	msgs := []model.Message{
+		{Type: messagetype.StartNewRound, Data: []byte("1")},
+		{Type: messagetype.StartNewRound, Data: []byte("2")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("3")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("4")},
+		{Type: messagetype.StartNewRound, Data: []byte("5")},
+		{Type: messagetype.StartNewRound, Data: []byte("6")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("7")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("8")},
+	}
+	expectedOutputIds := [][]byte{[]byte("8")}
+
+	socket := networksocket.New(msgs)
+	relayer := NewRelayer(socket, logger, config)
+
+	sub1, sub1MsgChan := subscriber.New(
+		logger,
+		relayer,
+		1,
+		[]messagetype.MessageType{messagetype.ReceivedAnswer},
+		true,
+	)
+
+	sub1.Listen()
+	relayer.Listen()
+
+
+	// assert result messages
+	i := 0
+	for msg := range sub1MsgChan {
+
+		if i >= len(expectedOutputIds) || bytes.Equal(msg.Data, expectedOutputIds[i]) == false {
+			t.Fatalf("error on result assert, expected msg.data: %s, actual: %s", expectedOutputIds[i], msg.Data)
+		}
+		i++
+	}
+
+	// assert result length
+	if i != len(expectedOutputIds) {
+		t.Fatalf("error on result length assert, expected len: %d, actual: %d", len(expectedOutputIds), i)
+	}
+
+}
+
+func TestOneSubOneMsgTypeStartNewRound(t *testing.T) {
+	logger := log.New(getLogOutput(true), "", log.Ldate|log.Ltime|log.Lshortfile)
+	config := getServiceConfig()
+
+	msgs := []model.Message{
+		{Type: messagetype.StartNewRound, Data: []byte("1")},
+		{Type: messagetype.StartNewRound, Data: []byte("2")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("3")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("4")},
+		{Type: messagetype.StartNewRound, Data: []byte("5")},
+		{Type: messagetype.StartNewRound, Data: []byte("6")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("7")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("8")},
+	}
+	expectedOutputIds := [][]byte{[]byte("6"),[]byte("5")}
+
+	socket := networksocket.New(msgs)
+	relayer := NewRelayer(socket, logger, config)
+
+	sub1, sub1MsgChan := subscriber.New(
+		logger,
+		relayer,
+		1,
+		[]messagetype.MessageType{messagetype.StartNewRound},
+		true,
+	)
+
+	sub1.Listen()
+	relayer.Listen()
+
+
+	// assert result messages
+	i := 0
+	for msg := range sub1MsgChan {
+
+		if i >= len(expectedOutputIds) || bytes.Equal(msg.Data, expectedOutputIds[i]) == false {
+			t.Fatalf("error on result assert, expected msg.data: %s, actual: %s", expectedOutputIds[i], msg.Data)
+		}
+		i++
+	}
+
+	// assert result length
+	if i != len(expectedOutputIds) {
+		t.Fatalf("error on result length assert, expected len: %d, actual: %d", len(expectedOutputIds), i)
+	}
+
+}
+
+func TestTwoSubTwoMsgType(t *testing.T) {
+	logger := log.New(getLogOutput(true), "", log.Ldate|log.Ltime|log.Lshortfile)
+	config := getServiceConfig()
+
+	msgs := []model.Message{
+		{Type: messagetype.StartNewRound, Data: []byte("1")},
+		{Type: messagetype.StartNewRound, Data: []byte("2")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("3")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("4")},
+		{Type: messagetype.StartNewRound, Data: []byte("5")},
+		{Type: messagetype.StartNewRound, Data: []byte("6")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("7")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("8")},
+	}
+	expectedOutput := [][]byte{[]byte("6"),[]byte("5"),[]byte("8")}
+
+	socket := networksocket.New(msgs)
+	relayer := NewRelayer(socket, logger, config)
+
+	sub1, sub1MsgChan := subscriber.New(
+		logger,
+		relayer,
+		1,
+		[]messagetype.MessageType{messagetype.StartNewRound, messagetype.ReceivedAnswer},
+		true,
+	)
+
+	sub2, sub2MsgChan := subscriber.New(
+		logger,
+		relayer,
+		2,
+		[]messagetype.MessageType{messagetype.StartNewRound, messagetype.ReceivedAnswer},
+		true,
+	)
+
+	sub1.Listen()
+	sub2.Listen()
+
+	relayer.Listen()
+
+
+	// assert result messages - sub 1
+	i := 0
+	for msg := range sub1MsgChan {
+		if i >= len(expectedOutput) || bytes.Equal(msg.Data, expectedOutput[i]) == false {
+			t.Fatalf("error on result assert, expected msg.data: %s, actual: %s", expectedOutput[i], msg.Data)
+		}
+		i++
+	}
+
+	// assert result length - sub 1
+	if i != len(expectedOutput) {
+		t.Fatalf("error on result length assert, expected len: %d, actual: %d", len(expectedOutput), i)
+	}
+
+	// assert result messages - sub 2
+	i = 0
+	for msg := range sub2MsgChan {
+		if i >= len(expectedOutput) || bytes.Equal(msg.Data, expectedOutput[i]) == false {
+			t.Fatalf("error on result assert, expected msg.data: %s, actual: %s", expectedOutput[i], msg.Data)
+		}
+		i++
+	}
+
+	// assert result length  - sub 2
+	if i != len(expectedOutput) {
+		t.Fatalf("error on result length assert, expected len: %d, actual: %d", len(expectedOutput), i)
+	}
+
+}
+
+func TestTwoSubDifferentMsgType(t *testing.T) {
+	logger := log.New(getLogOutput(true), "", log.Ldate|log.Ltime|log.Lshortfile)
+	config := getServiceConfig()
+
+	msgs := []model.Message{
+		{Type: messagetype.StartNewRound, Data: []byte("1")},
+		{Type: messagetype.StartNewRound, Data: []byte("2")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("3")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("4")},
+		{Type: messagetype.StartNewRound, Data: []byte("5")},
+		{Type: messagetype.StartNewRound, Data: []byte("6")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("7")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("8")},
+	}
+	sub1ExpectedOutput := [][]byte{[]byte("6"),[]byte("5")}
+	sub2ExpectedOutput := [][]byte{[]byte("8")}
+	socket := networksocket.New(msgs)
+	relayer := NewRelayer(socket, logger, config)
+
+	sub1, sub1MsgChan := subscriber.New(
+		logger,
+		relayer,
+		1,
+		[]messagetype.MessageType{messagetype.StartNewRound},
+		true,
+	)
+
+	sub2, sub2MsgChan := subscriber.New(
+		logger,
+		relayer,
+		2,
+		[]messagetype.MessageType{messagetype.ReceivedAnswer},
+		true,
+	)
+
+	sub1.Listen()
+	sub2.Listen()
+
+	relayer.Listen()
+
+
+	// assert result messages - sub 1
+	i := 0
+	for msg := range sub1MsgChan {
+		if i >= len(sub1ExpectedOutput) || bytes.Equal(msg.Data, sub1ExpectedOutput[i]) == false {
+			t.Fatalf("error on result assert, expected msg.data: %s, actual: %s", sub1ExpectedOutput[i], msg.Data)
+		}
+		i++
+	}
+
+	// assert result length - sub 1
+	if i != len(sub1ExpectedOutput) {
+		t.Fatalf("error on result length assert, expected len: %d, actual: %d", len(sub1ExpectedOutput), i)
+	}
+
+	// assert result messages - sub 2
+	i = 0
+	for msg := range sub2MsgChan {
+		if i >= len(sub2ExpectedOutput) || bytes.Equal(msg.Data, sub2ExpectedOutput[i]) == false {
+			t.Fatalf("error on result assert, expected msg.data: %s, actual: %s", sub2ExpectedOutput[i], msg.Data)
+		}
+		i++
+	}
+
+	// assert result length  - sub 2
+	if i != len(sub2ExpectedOutput) {
+		t.Fatalf("error on result length assert, expected len: %d, actual: %d", len(sub2ExpectedOutput), i)
+	}
+
+}
+
+func TestOneBufferedAndOneNonBuffered(t *testing.T) {
+	logger := log.New(getLogOutput(true), "", log.Ldate|log.Ltime|log.Lshortfile)
+	config := getServiceConfig()
+
+	msgs := []model.Message{
+		{Type: messagetype.StartNewRound, Data: []byte("1")},
+		{Type: messagetype.StartNewRound, Data: []byte("2")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("3")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("4")},
+		{Type: messagetype.StartNewRound, Data: []byte("5")},
+		{Type: messagetype.StartNewRound, Data: []byte("6")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("7")},
+		{Type: messagetype.ReceivedAnswer, Data: []byte("8")},
+	}
+	sub1ExpectedOutput := [][]byte{[]byte("6")}
+	sub2ExpectedOutput := [][]byte{[]byte("6"),[]byte("5")}
+	socket := networksocket.New(msgs)
+	relayer := NewRelayer(socket, logger, config)
+
+	sub1, sub1MsgChan := subscriber.New(
+		logger,
+		relayer,
+		1,
+		[]messagetype.MessageType{messagetype.StartNewRound},
+		false,
+	)
+
+	sub2, sub2MsgChan := subscriber.New(
+		logger,
+		relayer,
+		2,
+		[]messagetype.MessageType{messagetype.StartNewRound},
+		true,
+	)
+
+	sub1.Listen()
+	sub2.Listen()
+
+	relayer.Listen()
+
+
+	// assert result messages - sub 1
+	i := 0
+	for msg := range sub1MsgChan {
+		if i >= len(sub1ExpectedOutput) || bytes.Equal(msg.Data, sub1ExpectedOutput[i]) == false {
+			t.Fatalf("error on result assert, expected msg.data: %s, actual: %s", sub1ExpectedOutput[i], msg.Data)
+		}
+		i++
+	}
+
+	// assert result length - sub 1
+	if i != len(sub1ExpectedOutput) {
+		t.Fatalf("error on result length assert, expected len: %d, actual: %d", len(sub1ExpectedOutput), i)
+	}
+
+	// assert result messages - sub 2
+	i = 0
+	for msg := range sub2MsgChan {
+		if i >= len(sub2ExpectedOutput) || bytes.Equal(msg.Data, sub2ExpectedOutput[i]) == false {
+			t.Fatalf("error on result assert, expected msg.data: %s, actual: %s", sub2ExpectedOutput[i], msg.Data)
+		}
+		i++
+	}
+
+	// assert result length  - sub 2
+	if i != len(sub2ExpectedOutput) {
+		t.Fatalf("error on result length assert, expected len: %d, actual: %d", len(sub2ExpectedOutput), i)
+	}
+}
 
 func getServiceConfig() *configuration.Config {
 	importanceOrder := []messagetype.MessageType{messagetype.StartNewRound, messagetype.ReceivedAnswer}
@@ -57,15 +386,10 @@ func getServiceConfig() *configuration.Config {
 	msgTypeToQueueSize[messagetype.ReceivedAnswer] = 1
 
 	return  &configuration.Config{
-		MessageTypeToQueueSize: msgTypeToQueueSize,
-		MessageTypeImportanceOrderDesc: importanceOrder,
+		MsgTypeStoredLength:        msgTypeToQueueSize,
+		MsgTypeImportanceOrderDesc: importanceOrder,
 	}
 }
-
-//func getMessages(r model.MessageRelayer, logger *log.Logger) chan bool {
-//	res.Type = messagetype.StartNewRound
-//	res.Data = []byte(fmt.Sprintf("“An ounce of prevention is worth a pound of cure.” - B.F (%d)", n.c + 1))
-//}
 
 func getLogOutput(isFile bool) io.Writer {
 	if isFile {

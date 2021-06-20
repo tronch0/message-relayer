@@ -23,7 +23,7 @@ func getServiceConfig() *configuration.Config {
 	msgTypeToQueueSize[messagetype.StartNewRound] = 1
 
 	return  &configuration.Config{
-		MessageTypeToQueueSize: msgTypeToQueueSize,
-		MessageTypeImportanceOrderDesc: importanceOrder,
+		MsgTypeStoredLength:        msgTypeToQueueSize,
+		MsgTypeImportanceOrderDesc: importanceOrder,
 	}
 }

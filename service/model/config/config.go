@@ -5,6 +5,6 @@ import (
 )
 
 type Config struct {
-	MessageTypeToQueueSize map[messagetype2.MessageType]int
-	MessageTypeImportanceOrderDesc []messagetype2.MessageType
+	MsgTypeStoredLength        map[messagetype2.MessageType]int
+	MsgTypeImportanceOrderDesc []messagetype2.MessageType
 }

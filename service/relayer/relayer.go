@@ -12,22 +12,24 @@ type Relayer struct {
 	socket model.NetworkSocket
 	logger *log.Logger
 
-	subscriberMap map[messagetype.MessageType][]chan<- model.Message
-	messagesQueues map[messagetype.MessageType]*utils.Stack
-	messageTypeImportanceDesc []messagetype.MessageType
+	typeToSubscribers       map[messagetype.MessageType][]chan<- model.Message
+	subscribersChannels     map[chan<- model.Message]bool
+	typeToSavedMsgs         map[messagetype.MessageType]*utils.Stack
+	typeImportanceOrderDesc []messagetype.MessageType
 }
 
 func NewRelayer(socket model.NetworkSocket, logger *log.Logger, config *config2.Config) *Relayer {
 	res := &Relayer{
-		logger: logger,
-		socket: socket,
-		subscriberMap: make(map[messagetype.MessageType][]chan<- model.Message),
-		messagesQueues: make(map[messagetype.MessageType]*utils.Stack),
-		messageTypeImportanceDesc: config.MessageTypeImportanceOrderDesc,
+		logger:                  logger,
+		socket:                  socket,
+		typeToSubscribers:       make(map[messagetype.MessageType][]chan<- model.Message),
+		subscribersChannels:     make(map[chan<- model.Message]bool),
+		typeToSavedMsgs:         make(map[messagetype.MessageType]*utils.Stack),
+		typeImportanceOrderDesc: config.MsgTypeImportanceOrderDesc,
 	}
 
-	for msgType, queueSize := range config.MessageTypeToQueueSize {
-		res.messagesQueues[msgType] = utils.NewStack(queueSize)
+	for msgType, queueSize := range config.MsgTypeStoredLength {
+		res.typeToSavedMsgs[msgType] = utils.NewStack(queueSize)
 	}
 
 	res.logger.Println("instantiated relayer")
@@ -35,24 +37,30 @@ func NewRelayer(socket model.NetworkSocket, logger *log.Logger, config *config2.
 	return res
 }
 
-func (r *Relayer) SubscribeToMessages(msgType messagetype.MessageType, messages chan<- model.Message) {
+func (r *Relayer) SubscribeToMessages(msgType messagetype.MessageType, msgChan chan<- model.Message) {
 
-	if subscribers, isFound := r.subscriberMap[msgType]; isFound {
-		r.subscriberMap[msgType] = append(subscribers, messages)
+	if subscribers, isFound := r.typeToSubscribers[msgType]; isFound {
+		r.typeToSubscribers[msgType] = append(subscribers, msgChan)
 	} else {
-		r.subscriberMap[msgType] = []chan<- model.Message{messages}
+		r.typeToSubscribers[msgType] = []chan<- model.Message{msgChan}
 	}
+
+	r.subscribersChannels[msgChan] = true
 
 	r.logger.Printf("relayer - added new subscriber for message-type %d", msgType)
 }
 
+
 func (r *Relayer) Listen() { // we should setup a termination policy, specific error type or max error count
 	r.logger.Println("relayer - start listening")
-
+	go r.processIncomingTraffic()
+}
+func (r *Relayer) processIncomingTraffic() { // we should setup a termination policy, specific error type or max error count
 	r.consumeAndStoreMessages()
 	r.processQueuedMessages()
-	r.closedAllBroadcastChannels()
+	r.closedAllSubscribersChannels()
 }
+
 
 func (r *Relayer) consumeAndStoreMessages() {
 	maxErrCounter := 3
@@ -64,35 +72,39 @@ func (r *Relayer) consumeAndStoreMessages() {
 			maxErrCounter--
 		} else {
 			r.logger.Printf("relayer - queue message (type: %d)", msg.Type)
-			r.messagesQueues[msg.Type].Push(msg)
+			r.typeToSavedMsgs[msg.Type].Push(msg)
 		}
 	}
 }
 
 func (r *Relayer) processQueuedMessages() {
 
-	for _, msgType := range r.messageTypeImportanceDesc { // iterate over messages by type in importance order (DESC)
-		messagesStack, isExist := r.messagesQueues[msgType]
+	for _, msgType := range r.typeImportanceOrderDesc { // iterate over messages by type in importance order (DESC)
+		messagesStack, isExist := r.typeToSavedMsgs[msgType]
 		if isExist == false {
 			continue
 		}
 
 		for msg := messagesStack.Pop(); msg != nil; msg = messagesStack.Pop() { // iterate over all messages from the same type
 
-			r.logger.Printf("relayer - broadcast message (type: %d) to %d subscribers", msg.Type, len(r.subscriberMap[msg.Type]))
+			r.logger.Printf("relayer - broadcast message (type: %d) to %d subscribers", msg.Type, len(r.typeToSubscribers[msg.Type]))
 
-			for _, subscriber := range r.subscriberMap[msg.Type] { // iterate over all subscribers subscribed to this type
-				subscriber <- *msg
+			for _, subscriber := range r.typeToSubscribers[msg.Type] { // iterate over all subscribers subscribed to this type
+				//copyMsg := msg
+				//  non blocking send
+				select {
+				case subscriber <- *msg:
+				default:
+				}
+
 			}
 		}
 
 	}
 }
 
-func (r *Relayer) closedAllBroadcastChannels() {
-	for _, subscribersChannels := range r.subscriberMap {
-		for _, subscriberChan := range subscribersChannels {
-			close(subscriberChan)
-		}
+func (r *Relayer) closedAllSubscribersChannels() {
+	for c := range r.subscribersChannels {
+		close(c)
 	}
 }
