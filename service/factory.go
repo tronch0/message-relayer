@@ -13,11 +13,11 @@ func New(config *configuration.Config) {
 	socket := getNetworkSocket()
 	r := relayer.NewRelayer(socket, logger, config)
 
-	setupSubscribers(r,logger)
+	setupSubscribers(r, logger)
 	r.Listen()
 }
 
-func setupSubscribers(r model.MessageRelayer, logger *log.Logger)  {
+func setupSubscribers(r model.MessageRelayer, logger *log.Logger) {
 	// here we can subscribe to the relayer
 }
 

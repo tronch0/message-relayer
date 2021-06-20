@@ -7,8 +7,8 @@ import (
 	"message-relayer/service/model"
 	configuration "message-relayer/service/model/config"
 	"message-relayer/service/model/messagetype"
-	"message-relayer/service/relayer/test/mock/networksocket"
-	"message-relayer/service/relayer/test/mock/subscriber"
+	"message-relayer/service/relayer/testing/mock/networksocket"
+	"message-relayer/service/relayer/testing/mock/subscriber"
 	"os"
 	"testing"
 )
@@ -21,7 +21,6 @@ import (
 // 5. Happy flow - 5 subs - 1 message type.
 // 6. Happy flow - 1 subs - 3 message type.
 // 7. Happy flow - 3 subs - 3 message type
-
 
 func TestOneSubTwoMsgType(t *testing.T) {
 	logger := log.New(getLogOutput(true), "", log.Ldate|log.Ltime|log.Lshortfile)
@@ -37,7 +36,7 @@ func TestOneSubTwoMsgType(t *testing.T) {
 		{Type: messagetype.ReceivedAnswer, Data: []byte("7")},
 		{Type: messagetype.ReceivedAnswer, Data: []byte("8")},
 	}
-	expectedOutputIds := [][]byte{[]byte("6"),[]byte("5"),[]byte("8")}
+	expectedOutputIds := [][]byte{[]byte("6"), []byte("5"), []byte("8")}
 
 	socket := networksocket.New(msgs)
 	relayer := NewRelayer(socket, logger, config)
@@ -48,11 +47,10 @@ func TestOneSubTwoMsgType(t *testing.T) {
 		1,
 		[]messagetype.MessageType{messagetype.StartNewRound, messagetype.ReceivedAnswer},
 		true,
-		)
+	)
 
 	sub1.Listen()
 	relayer.Listen()
-
 
 	// assert result messages
 	i := 0
@@ -100,7 +98,6 @@ func TestOneSubOneMsgTypeReceivedAnswer(t *testing.T) {
 	sub1.Listen()
 	relayer.Listen()
 
-
 	// assert result messages
 	i := 0
 	for msg := range sub1MsgChan {
@@ -132,7 +129,7 @@ func TestOneSubOneMsgTypeStartNewRound(t *testing.T) {
 		{Type: messagetype.ReceivedAnswer, Data: []byte("7")},
 		{Type: messagetype.ReceivedAnswer, Data: []byte("8")},
 	}
-	expectedOutputIds := [][]byte{[]byte("6"),[]byte("5")}
+	expectedOutputIds := [][]byte{[]byte("6"), []byte("5")}
 
 	socket := networksocket.New(msgs)
 	relayer := NewRelayer(socket, logger, config)
@@ -147,7 +144,6 @@ func TestOneSubOneMsgTypeStartNewRound(t *testing.T) {
 
 	sub1.Listen()
 	relayer.Listen()
-
 
 	// assert result messages
 	i := 0
@@ -180,7 +176,7 @@ func TestTwoSubTwoMsgType(t *testing.T) {
 		{Type: messagetype.ReceivedAnswer, Data: []byte("7")},
 		{Type: messagetype.ReceivedAnswer, Data: []byte("8")},
 	}
-	expectedOutput := [][]byte{[]byte("6"),[]byte("5"),[]byte("8")}
+	expectedOutput := [][]byte{[]byte("6"), []byte("5"), []byte("8")}
 
 	socket := networksocket.New(msgs)
 	relayer := NewRelayer(socket, logger, config)
@@ -205,7 +201,6 @@ func TestTwoSubTwoMsgType(t *testing.T) {
 	sub2.Listen()
 
 	relayer.Listen()
-
 
 	// assert result messages - sub 1
 	i := 0
@@ -251,7 +246,7 @@ func TestTwoSubDifferentMsgType(t *testing.T) {
 		{Type: messagetype.ReceivedAnswer, Data: []byte("7")},
 		{Type: messagetype.ReceivedAnswer, Data: []byte("8")},
 	}
-	sub1ExpectedOutput := [][]byte{[]byte("6"),[]byte("5")}
+	sub1ExpectedOutput := [][]byte{[]byte("6"), []byte("5")}
 	sub2ExpectedOutput := [][]byte{[]byte("8")}
 	socket := networksocket.New(msgs)
 	relayer := NewRelayer(socket, logger, config)
@@ -276,7 +271,6 @@ func TestTwoSubDifferentMsgType(t *testing.T) {
 	sub2.Listen()
 
 	relayer.Listen()
-
 
 	// assert result messages - sub 1
 	i := 0
@@ -323,7 +317,7 @@ func TestOneBufferedAndOneNonBuffered(t *testing.T) {
 		{Type: messagetype.ReceivedAnswer, Data: []byte("8")},
 	}
 	sub1ExpectedOutput := [][]byte{[]byte("6")}
-	sub2ExpectedOutput := [][]byte{[]byte("6"),[]byte("5")}
+	sub2ExpectedOutput := [][]byte{[]byte("6"), []byte("5")}
 	socket := networksocket.New(msgs)
 	relayer := NewRelayer(socket, logger, config)
 
@@ -347,7 +341,6 @@ func TestOneBufferedAndOneNonBuffered(t *testing.T) {
 	sub2.Listen()
 
 	relayer.Listen()
-
 
 	// assert result messages - sub 1
 	i := 0
@@ -385,7 +378,7 @@ func getServiceConfig() *configuration.Config {
 	msgTypeToQueueSize[messagetype.StartNewRound] = 2
 	msgTypeToQueueSize[messagetype.ReceivedAnswer] = 1
 
-	return  &configuration.Config{
+	return &configuration.Config{
 		MsgTypeStoredLength:        msgTypeToQueueSize,
 		MsgTypeImportanceOrderDesc: importanceOrder,
 	}

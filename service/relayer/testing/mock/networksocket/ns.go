@@ -16,7 +16,7 @@ type NS struct {
 	messagesToSend []model.Message
 }
 
-func (n *NS) Read() (model.Message, error){
+func (n *NS) Read() (model.Message, error) {
 	if len(n.messagesToSend) == 0 {
 		return model.Message{Type: messagetype.Undefined, Data: nil}, fmt.Errorf("no more messages")
 	}
@@ -26,4 +26,3 @@ func (n *NS) Read() (model.Message, error){
 
 	return res, nil
 }
-

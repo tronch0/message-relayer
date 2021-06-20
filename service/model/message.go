@@ -8,8 +8,3 @@ type Message struct {
 	Type messagetype.MessageType
 	Data []byte
 }
-
-
-
-
-

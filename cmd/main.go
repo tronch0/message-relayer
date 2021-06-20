@@ -14,7 +14,6 @@ func main() {
 	service.New(c)
 }
 
-
 func getServiceConfig() *configuration.Config {
 	importanceOrder := []messagetype.MessageType{messagetype.StartNewRound, messagetype.ReceivedAnswer}
 
@@ -22,7 +21,7 @@ func getServiceConfig() *configuration.Config {
 	msgTypeToQueueSize[messagetype.StartNewRound] = 2
 	msgTypeToQueueSize[messagetype.StartNewRound] = 1
 
-	return  &configuration.Config{
+	return &configuration.Config{
 		MsgTypeStoredLength:        msgTypeToQueueSize,
 		MsgTypeImportanceOrderDesc: importanceOrder,
 	}

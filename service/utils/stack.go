@@ -6,19 +6,18 @@ import (
 
 // Stack implementation with circular array under the hood
 type Stack struct {
-	arr []*model.Message
+	arr     []*model.Message
 	currPtr int
-	size int
+	size    int
 }
-
 
 func NewStack(size int) *Stack {
 	a := make([]*model.Message, size)
 
 	return &Stack{
-		arr: a,
+		arr:     a,
 		currPtr: -1,
-		size: size,
+		size:    size,
 	}
 }
 
@@ -38,7 +37,3 @@ func (s *Stack) Push(msg model.Message) {
 	s.currPtr = (s.currPtr + 1) % s.size
 	s.arr[s.currPtr] = &msg
 }
-
-
-
-

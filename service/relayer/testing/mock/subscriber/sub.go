@@ -19,7 +19,7 @@ func New(
 	subscriberId int,
 	subscribeToTypes []messagetype.MessageType,
 	buffered bool,
-	) (*Subscriber,chan model.Message) {
+) (*Subscriber, chan model.Message) {
 
 	outputChan := make(chan model.Message)
 	var incomingChan chan model.Message
@@ -38,7 +38,7 @@ func New(
 	}
 
 	for _, msgType := range subscribeToTypes {
-		r.SubscribeToMessages(msgType,res.incomingChan)
+		r.SubscribeToMessages(msgType, res.incomingChan)
 		res.logger.Printf("subscriber %d subscribed to %d message type", msgType)
 	}
 
@@ -51,7 +51,7 @@ func (s *Subscriber) Listen() {
 
 func (s *Subscriber) listen() {
 	for msg := range s.incomingChan {
-		s.logger.Printf("subscriber-%d: got new message, type: %d, body: %s", s.subscriberId,msg.Type,msg.Data)
+		s.logger.Printf("subscriber-%d: got new message, type: %d, body: %s", s.subscriberId, msg.Type, msg.Data)
 		s.msgChan <- msg
 	}
 

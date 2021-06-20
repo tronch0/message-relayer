@@ -50,7 +50,6 @@ func (r *Relayer) SubscribeToMessages(msgType messagetype.MessageType, msgChan c
 	r.logger.Printf("relayer - added new subscriber for message-type %d", msgType)
 }
 
-
 func (r *Relayer) Listen() { // we should setup a termination policy, specific error type or max error count
 	r.logger.Println("relayer - start listening")
 	go r.processIncomingTraffic()
@@ -60,7 +59,6 @@ func (r *Relayer) processIncomingTraffic() { // we should setup a termination po
 	r.processQueuedMessages()
 	r.closedAllSubscribersChannels()
 }
-
 
 func (r *Relayer) consumeAndStoreMessages() {
 	maxErrCounter := 3
