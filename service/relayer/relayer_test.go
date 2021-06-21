@@ -363,16 +363,16 @@ func TestOneBufferedAndOneNonBuffered(t *testing.T) {
 }
 
 func getServiceConfig() *configuration.Config {
-	importanceOrder := []messagetype.MessageType{messagetype.StartNewRound, messagetype.ReceivedAnswer}
+	broadcastOrder := []messagetype.MessageType{messagetype.StartNewRound, messagetype.ReceivedAnswer}
 
 	msgTypeToQueueSize := make(map[messagetype.MessageType]int)
 	msgTypeToQueueSize[messagetype.StartNewRound] = 2
 	msgTypeToQueueSize[messagetype.ReceivedAnswer] = 1
 
 	return &configuration.Config{
-		MsgTypeStoredLength:        msgTypeToQueueSize,
-		MsgTypeImportanceOrderDesc: importanceOrder,
-		LogToFile:                  false,
+		MsgTypeStoredLength:   msgTypeToQueueSize,
+		MsgTypeBroadcastOrder: broadcastOrder,
+		LogToFile:             false,
 	}
 }
 

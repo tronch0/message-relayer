@@ -14,16 +14,17 @@ func main() {
 	service.New(c)
 }
 
+// in a normal case, we'll get all config definitions from the user (from a file or env-var)
 func getServiceConfig() *configuration.Config {
-	importanceOrder := []messagetype.MessageType{messagetype.StartNewRound, messagetype.ReceivedAnswer}
+	broadcastOrder := []messagetype.MessageType{messagetype.StartNewRound, messagetype.ReceivedAnswer}
 
 	msgTypeToQueueSize := make(map[messagetype.MessageType]int)
 	msgTypeToQueueSize[messagetype.StartNewRound] = 2
 	msgTypeToQueueSize[messagetype.StartNewRound] = 1
 
 	return &configuration.Config{
-		MsgTypeStoredLength:        msgTypeToQueueSize,
-		MsgTypeImportanceOrderDesc: importanceOrder,
-		LogToFile:                  false,
+		MsgTypeStoredLength:   msgTypeToQueueSize,
+		MsgTypeBroadcastOrder: broadcastOrder,
+		LogToFile:             false,
 	}
 }
