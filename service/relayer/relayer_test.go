@@ -13,18 +13,9 @@ import (
 	"testing"
 )
 
-// Test Scenarios:
-// 1. Empty - No incoming traffic, No Subs.
-// 2. No incoming with subscribers.
-// 3. Incoming with no subscribers.
-// 4. Exceed error count -> relayer should terminate.
-// 5. Happy flow - 5 subs - 1 message type.
-// 6. Happy flow - 1 subs - 3 message type.
-// 7. Happy flow - 3 subs - 3 message type
-
 func TestOneSubTwoMsgType(t *testing.T) {
-	logger := log.New(getLogOutput(true), "", log.Ldate|log.Ltime|log.Lshortfile)
 	config := getServiceConfig()
+	logger := log.New(getLogOutput(config.LogToFile), "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	msgs := []model.Message{
 		{Type: messagetype.StartNewRound, Data: []byte("1")},
@@ -69,8 +60,8 @@ func TestOneSubTwoMsgType(t *testing.T) {
 }
 
 func TestOneSubOneMsgTypeReceivedAnswer(t *testing.T) {
-	logger := log.New(getLogOutput(true), "", log.Ldate|log.Ltime|log.Lshortfile)
 	config := getServiceConfig()
+	logger := log.New(getLogOutput(config.LogToFile), "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	msgs := []model.Message{
 		{Type: messagetype.StartNewRound, Data: []byte("1")},
@@ -116,8 +107,8 @@ func TestOneSubOneMsgTypeReceivedAnswer(t *testing.T) {
 }
 
 func TestOneSubOneMsgTypeStartNewRound(t *testing.T) {
-	logger := log.New(getLogOutput(true), "", log.Ldate|log.Ltime|log.Lshortfile)
 	config := getServiceConfig()
+	logger := log.New(getLogOutput(config.LogToFile), "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	msgs := []model.Message{
 		{Type: messagetype.StartNewRound, Data: []byte("1")},
@@ -163,8 +154,8 @@ func TestOneSubOneMsgTypeStartNewRound(t *testing.T) {
 }
 
 func TestTwoSubTwoMsgType(t *testing.T) {
-	logger := log.New(getLogOutput(true), "", log.Ldate|log.Ltime|log.Lshortfile)
 	config := getServiceConfig()
+	logger := log.New(getLogOutput(config.LogToFile), "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	msgs := []model.Message{
 		{Type: messagetype.StartNewRound, Data: []byte("1")},
@@ -233,8 +224,8 @@ func TestTwoSubTwoMsgType(t *testing.T) {
 }
 
 func TestTwoSubDifferentMsgType(t *testing.T) {
-	logger := log.New(getLogOutput(true), "", log.Ldate|log.Ltime|log.Lshortfile)
 	config := getServiceConfig()
+	logger := log.New(getLogOutput(config.LogToFile), "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	msgs := []model.Message{
 		{Type: messagetype.StartNewRound, Data: []byte("1")},
@@ -303,8 +294,8 @@ func TestTwoSubDifferentMsgType(t *testing.T) {
 }
 
 func TestOneBufferedAndOneNonBuffered(t *testing.T) {
-	logger := log.New(getLogOutput(true), "", log.Ldate|log.Ltime|log.Lshortfile)
 	config := getServiceConfig()
+	logger := log.New(getLogOutput(config.LogToFile), "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	msgs := []model.Message{
 		{Type: messagetype.StartNewRound, Data: []byte("1")},
@@ -381,6 +372,7 @@ func getServiceConfig() *configuration.Config {
 	return &configuration.Config{
 		MsgTypeStoredLength:        msgTypeToQueueSize,
 		MsgTypeImportanceOrderDesc: importanceOrder,
+		LogToFile:                  false,
 	}
 }
 

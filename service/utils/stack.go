@@ -4,7 +4,7 @@ import (
 	"message-relayer/service/model"
 )
 
-// Stack implementation with circular array under the hood
+// Stack implementation with circular array
 type Stack struct {
 	arr     []*model.Message
 	currPtr int

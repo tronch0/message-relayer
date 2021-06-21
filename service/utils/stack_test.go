@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	model2 "message-relayer/service/model"
 	messagetype2 "message-relayer/service/model/messagetype"
 	"testing"
@@ -63,4 +64,41 @@ func TestOverwriteValues(t *testing.T) {
 	if res != nil {
 		t.Fatalf("res value failed, expected val: nil, actual val: %d", res)
 	}
+}
+
+func TestInsertAfterTotalRemove(t *testing.T) {
+	s := NewStack(3)
+	s.Push(model2.Message{Type: messagetype2.StartNewRound, Data: []byte("1")})
+	s.Push(model2.Message{Type: messagetype2.ReceivedAnswer, Data: []byte("2")})
+	s.Push(model2.Message{Type: messagetype2.Undefined, Data: []byte("3")})
+	//s.Push(model2.Message{Type: messagetype2.Undefined, Data: []byte("4")})
+
+	res := s.Pop()
+	if res.Type != messagetype2.Undefined {
+		t.Fatalf("res value failed, expected val: %d, actual val: %d", 3, *res)
+	}
+
+	res = s.Pop()
+	if res.Type != messagetype2.ReceivedAnswer {
+		t.Fatalf("res value failed, expected val: %d, actual val: %d", 2, *res)
+	}
+
+	res = s.Pop()
+	if res.Type != messagetype2.StartNewRound {
+		t.Fatalf("res value failed, expected val: %d, actual val: %d", 2, *res)
+	}
+	s.Push(model2.Message{Type: messagetype2.ReceivedAnswer, Data: []byte("2")})
+	s.Push(model2.Message{Type: messagetype2.Undefined, Data: []byte("3")})
+
+	res = s.Pop()
+	if res.Type != messagetype2.Undefined {
+		t.Fatalf("res value failed, expected val: %d, actual val: %d", 3, *res)
+	}
+
+	res = s.Pop()
+	if res.Type != messagetype2.ReceivedAnswer {
+		t.Fatalf("res value failed, expected val: %d, actual val: %d", 2, *res)
+	}
+
+	fmt.Println(s)
 }

@@ -10,7 +10,7 @@ import (
 func main() {
 	log.Printf("** MessageRelayer service starting... **")
 
-	c := getServiceConfig() // we should get from the input to the program
+	c := getServiceConfig()
 	service.New(c)
 }
 
@@ -24,5 +24,6 @@ func getServiceConfig() *configuration.Config {
 	return &configuration.Config{
 		MsgTypeStoredLength:        msgTypeToQueueSize,
 		MsgTypeImportanceOrderDesc: importanceOrder,
+		LogToFile:                  false,
 	}
 }
